@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Zombie City Survivor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #1a1a1a;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #startMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            z-index: 30;
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 20px;
+            border: 3px solid #ff0000;
+        }
+
+        #startMenu h1 {
+            font-size: 48px;
+            color: #ff0000;
+            text-shadow: 0 0 20px #ff0000;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+            50% { 
+                opacity: 0.8; 
+                transform: scale(1.02); 
+            }
+        }
+
+        #startMenu p {
+            margin: 10px 0;
+            font-size: 18px;
+            color: #aaa;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat {
+            background: rgba(0,0,0,0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 2px solid #ff0000;
+            font-size: 14px;
+        }
+
+        .coin-stat {
+            background: rgba(255,215,0,0.2);
+            border-color: #ffd700;
+        }
+
+        #vendorMenu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 20px;
+            border-radius: 10px;
+            border: 3px solid #ffd700;
+            color: #fff;
+            display: none;
+            z-index: 25;
+            pointer-events: all;
+            max-width: 500px;
+        }
+
+        #vendorMenu h2 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .weapon-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weapon-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .weapon-stats {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        button {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(255,0,0,0.3);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #ff3333, #ff0000);
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(255,0,0,0.5);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .buy-button {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 5px 15px;
+            font-size: 1em;
+        }
+
+        .buy-button:hover {
+            background: linear-gradient(135deg, #ffed4e, #fff);
+        }
+
+        .buy-button:disabled {
+            background: #666;
+            color: #333;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #gameOver, #levelUp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: #fff;
+            display: none;
+            z-index: 20;
+            pointer-events: all;
+            border: 2px solid #ff0000;
+        }
+
+        #gameOver h2, #levelUp h2 {
+            color: #ff0000;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .upgrade-option {
+            margin: 10px 0;
+        }
+
+        #vendorNotification {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: bold;
+            display: none;
+            z-index: 15;
+            animation: slideDown 0.5s;
+            box-shadow: 0 5px 20px rgba(255,215,0,0.5);
+        }
+
+        @keyframes slideDown {
+            from { 
+                top: -50px; 
+                opacity: 0; 
+            }
+            to { 
+                top: 100px; 
+                opacity: 1; 
+            }
+        }
+
+        #currentWeapon {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #666;
+            color: #fff;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Start Menu -->
+    <div id="startMenu">
+        <h1>🧟 ZOMBIE CITY SURVIVOR 🧟</h1>
+        <p>Survive 15 minutes in the zombie apocalypse!</p>
+        <p>🎮 Use WASD or Arrow Keys to move</p>
+        <p>💰 Collect coins to buy weapons from the vendor truck</p>
+        <p>🔫 Switch weapons with number keys 1-9</p>
+        <button id="startButton">START GAME</button>
+    </div>
+    
+    <!-- Game UI -->
+    <div id="ui">
+        <div class="stats">
+            <div class="stat">❤️ <span id="hp">100</span>/<span id="maxHp">100</span></div>
+            <div class="stat coin-stat">💰 <span id="coins">0</span> Silver</div>
+            <div class="stat">⏰ <span id="timer">15:00</span></div>
+            <div class="stat">💀 <span id="kills">0</span></div>
+            <div class="stat">⭐ Lv.<span id="level">1</span></div>
+            <div class="stat">✨ <span id="xp">0</span>/<span id="xpNeeded">10</span></div>
+        </div>
+    </div>
+    
+    <!-- Current Weapon Display -->
+    <div id="currentWeapon">
+        <div>Current: <span id="weaponName">Pistol</span></div>
+        <div style="font-size:12px; color:#aaa;">Ammo: <span id="weaponAmmo">∞</span></div>
+    </div>
+    
+    <!-- Vendor Notification -->
+    <div id="vendorNotification">
+        🚚 VENDOR TRUCK HAS ARRIVED! Press V to shop!
+    </div>
+    
+    <!-- Vendor Menu -->
+    <div id="vendorMenu">
+        <h2>🚚 WEAPON VENDOR</h2>
+        <p style="text-align:center; color:#ffd700;">Your Coins: <span id="vendorCoins">0</span></p>
+        <div id="weaponList"></div>
+        <button id="closeVendorBtn">Close</button>
+    </div>
+    
+    <!-- Level Up Menu -->
+    <div id="levelUp">
+        <h2>LEVEL UP!</h2>
+        <p>Choose an upgrade:</p>
+        <div id="upgradeOptions"></div>
+    </div>
+    
+    <!-- Game Over -->
+    <div id="gameOver">
+        <h2 id="gameOverTitle">GAME OVER</h2>
+        <p>You survived <span id="finalTime">0:00</span>!</p>
+        <p>Total Kills: <span id="finalKills">0</span></p>
+        <p>Coins Collected: <span id="finalCoins">0</span></p>
+        <button id="resetButton">Play Again</button>
+    </div>
+    
+    <script>
+        // ========================================
+        // GAME INITIALIZATION
+        // ========================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.imageSmoothingEnabled = false;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // ========================================
+        // CONSTANTS
+        // ========================================
+        const TILE_SIZE = 32;
+        const MAP_WIDTH = 80;
+        const MAP_HEIGHT = 80;
+        const GAME_TIME = 15 * 60 * 1000; // 15 minutes
+        const MAX_ZOMBIES = 50;
+        const VENDOR_INTERVAL = 60000; // 1 minute
+        const VENDOR_DURATION = 30000; // 30 seconds
+
+        // ========================================
+        // GAME STATE
+        // ========================================
+        const game = {
+            started: false,
+            startTime: 0,
+            coins: 0,
+            kills: 0,
+            level: 1,
+            xp: 0,
+            xpNeeded: 10,
+            paused: false,
+            cameraX: 0,
+            cameraY: 0,
+            shake: 0,
+            vendorActive: false,
+            vendorX: 0,
+            vendorY: 0,
+            lastVendorSpawn: 0,
+            currentWeapon: 'pistol'
+        };
+
+        // ========================================
+        // PLAYER
+        // ========================================
+        const player = {
+            x: MAP_WIDTH * TILE_SIZE / 2,
+            y: MAP_HEIGHT * TILE_SIZE / 2,
+            width: 24,
+            height: 24,
+            speed: 3,
+            hp: 100,
+            maxHp: 100,
+            lastShot: 0,
+            hitFlash: 0,
+            alive: true,
+            meleeAngle: 0,
+            meleeActive: false,
+            inventory: ['pistol']
+        };
+
+        // ========================================
+        // GAME ARRAYS
+        // ========================================
+        let zombies = [];
+        let bullets = [];
+        let particles = [];
+        let items = [];
+        let obstacles = [];
+        let roads = [];
+
+        // ========================================
+        // INPUT HANDLING
+        // ========================================
+        const keys = {};
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            
+            // Vendor interaction
+            if (e.key.toLowerCase() === 'v' && game.vendorActive) {
+                openVendor();
+            }
+            
+            // Weapon switching
+            const num = parseInt(e.key);
+            if (num >= 1 && num <= 9 && player.inventory[num - 1]) {
+                game.currentWeapon = player.inventory[num - 1];
+                updateWeaponDisplay();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // ========================================
+        // WEAPON DEFINITIONS
+        // ========================================
+        const WEAPONS = {
+            pistol: {
+                name: 'Pistol',
+                type: 'ranged',
+                damage: 10,
+                fireRate: 500,
+                range: 300,
+                bulletSpeed: 8,
+                bulletSize: 4,
+                piercing: 1,
+                multishot: 1,
+                price: 0
+            },
+            shotgun: {
+                name: 'Shotgun',
+                type: 'ranged',
+                damage: 8,
+                fireRate: 800,
+                range: 200,
+                bulletSpeed: 10,
+                bulletSize: 3,
+                piercing: 1,
+                multishot: 5,
+                spread: 0.3,
+                price: 50
+            },
+            machinegun: {
+                name: 'Machine Gun',
+                type: 'ranged',
+                damage: 15,
+                fireRate: 100,
+                range: 350,
+                bulletSpeed: 12,
+                bulletSize: 3,
+                piercing: 2,
+                multishot: 1,
+                price: 100
+            },
+            sword: {
+                name: 'Sword',
+                type: 'melee',
+                damage: 30,
+                fireRate: 400,
+                range: 60,
+                arc: Math.PI/3,
+                price: 75
+            },
+            bat: {
+                name: 'Baseball Bat',
+                type: 'melee',
+                damage: 20,
+                fireRate: 300,
+                range: 50,
+                arc: Math.PI/2,
+                knockback: 40,
+                price: 40
+            }
+        };
+
+        // ========================================
+        // SOUND SYSTEM
+        // ========================================
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContext();
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
+            }
+        }
+
+        function playSound(frequency, duration, volume = 0.1) {
+            if (!audioCtx) return;
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = frequency;
+                oscillator.type = 'square';
+                gainNode.gain.value = volume;
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        // ========================================
+        // ZOMBIE CLASS
+        // ========================================
+        class Zombie {
+            constructor(elite = false) {
+                this.elite = elite;
+                
+                // Spawn from edge
+                const side = Math.floor(Math.random() * 4);
+                const margin = 100;
+                
+                switch(side) {
+                    case 0: // top
+                        this.x = game.cameraX + Math.random() * canvas.width;
+                        this.y = game.cameraY - margin;
+                        break;
+                    case 1: // right
+                        this.x = game.cameraX + canvas.width + margin;
+                        this.y = game.cameraY + Math.random() * canvas.height;
+                        break;
+                    case 2: // bottom
+                        this.x = game.cameraX + Math.random() * canvas.width;
+                        this.y = game.cameraY + canvas.height + margin;
+                        break;
+                    case 3: // left
+                        this.x = game.cameraX - margin;
+                        this.y = game.cameraY + Math.random() * canvas.height;
+                        break;
+                }
+                
+                this.width = 20;
+                this.height = 20;
+                
+                if (elite) {
+                    this.speed = 0.8;
+                    this.hp = 100;
+                    this.maxHp = 100;
+                    this.damage = 20;
+                    this.coinChance = 0.5;
+                    this.coinAmount = 3;
+                    this.color = '#8855aa';
+                } else {
+                    this.speed = 0.5 + Math.random() * 0.5;
+                    this.hp = 30;
+                    this.maxHp = 30;
+                    this.damage = 10;
+                    this.coinChance = 0.3;
+                    this.coinAmount = 1;
+                    this.color = '#669966';
+                }
+                
+                this.stunTimer = 0;
+            }
+            
+            update() {
+                if (this.stunTimer > 0) {
+                    this.stunTimer--;
+                    return false;
+                }
+                
+                // Move toward player
+                const dx = player.x - this.x;
+                const dy = player.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0) {
+                    const moveX = (dx / dist) * this.speed;
+                    const moveY = (dy / dist) * this.speed;
+                    
+                    // Simple collision check with buildings
+                    const nextX = this.x + moveX;
+                    const nextY = this.y + moveY;
+                    let canMove = true;
+                    
+                    for (const obs of obstacles) {
+                        if (nextX < obs.x + obs.width &&
+                            nextX + this.width > obs.x &&
+                            nextY < obs.y + obs.height &&
+                            nextY + this.height > obs.y) {
+                            canMove = false;
+                            break;
+                        }
+                    }
+                    
+                    if (canMove) {
+                        this.x += moveX;
+                        this.y += moveY;
+                    } else {
+                        // Try to move around obstacle
+                        if (Math.random() < 0.5) {
+                            this.x += moveY * 0.5;
+                            this.y -= moveX * 0.5;
+                        } else {
+                            this.x -= moveY * 0.5;
+                            this.y += moveX * 0.5;
+                        }
+                    }
+                }
+                
+                // Check collision with player
+                if (this.x < player.x + player.width &&
+                    this.x + this.width > player.x &&
+                    this.y < player.y + player.height &&
+                    this.y + this.height > player.y &&
+                    player.alive) {
+                    
+                    player.hp -= this.damage;
+                    player.hitFlash = 1;
+                    game.shake = 10;
+                    this.stunTimer = 60;
+                    
+                    // Knockback
+                    const angle = Math.atan2(this.y - player.y, this.x - player.x);
+                    this.x += Math.cos(angle) * 30;
+                    this.y += Math.sin(angle) * 30;
+                    
+                    playSound(100, 0.2, 0.2);
+                    document.getElementById('hp').textContent = Math.max(0, Math.floor(player.hp));
+                }
+                
+                // Remove if too far
+                return dist > 2000;
+            }
+            
+            takeDamage(damage) {
+                this.hp -= damage;
+                this.stunTimer = 5;
+                playSound(200, 0.1);
+                
+                // Blood particles
+                for (let i = 0; i < 3; i++) {
+                    particles.push({
+                        x: this.x + this.width/2,
+                        y: this.y + this.height/2,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        color: '#ff0000',
+                        life: 20
+                    });
+                }
+                
+                if (this.hp <= 0) {
+                    this.die();
+                    return true;
+                }
+                return false;
+            }
+            
+            die() {
+                game.kills++;
+                playSound(150, 0.15, 0.1);
+                
+                // Drop coins
+                if (Math.random() < this.coinChance) {
+                    for (let i = 0; i < this.coinAmount; i++) {
+                        items.push({
+                            type: 'coin',
+                            x: this.x + this.width/2 + (Math.random() - 0.5) * 20,
+                            y: this.y + this.height/2 + (Math.random() - 0.5) * 20
+                        });
+                    }
+                }
+                
+                // Drop XP
+                items.push({
+                    type: 'xp',
+                    x: this.x + this.width/2,
+                    y: this.y + this.height/2,
+                    value: this.elite ? 3 : 1
+                });
+                
+                // Death particles
+                for (let i = 0; i < 8; i++) {
+                    particles.push({
+                        x: this.x + this.width/2,
+                        y: this.y + this.height/2,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: (Math.random() - 0.5) * 6,
+                        color: this.elite ? '#8855aa' : '#669966',
+                        life: 25
+                    });
+                }
+                
+                document.getElementById('kills').textContent = game.kills;
+            }
+            
+            draw() {
+                const screenX = this.x - game.cameraX;
+                const screenY = this.y - game.cameraY;
+                
+                if (screenX < -50 || screenX > canvas.width + 50 || 
+                    screenY < -50 || screenY > canvas.height + 50) return;
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(screenX + 2, screenY + this.height - 2, this.width - 4, 4);
+                
+                // Body
+                ctx.fillStyle = this.color;
+                ctx.fillRect(screenX, screenY, this.width, this.height);
+                
+                // Eyes
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(screenX + 4, screenY + 4, 4, 4);
+                ctx.fillRect(screenX + 12, screenY + 4, 4, 4);
+                
+                // Elite crown
+                if (this.elite) {
+                    ctx.fillStyle = '#ffd700';
+                    ctx.fillRect(screenX + 4, screenY - 4, 12, 4);
+                    ctx.fillRect(screenX + 2, screenY - 2, 3, 2);
+                    ctx.fillRect(screenX + 15, screenY - 2, 3, 2);
+                }
+                
+                // Health bar
+                if (this.hp < this.maxHp) {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(screenX - 2, screenY - 10, this.width + 4, 4);
+                    ctx.fillStyle = this.elite ? '#ff00ff' : '#ff0000';
+                    ctx.fillRect(screenX, screenY - 8, this.width * (this.hp / this.maxHp), 2);
+                }
+            }
+        }
+
+        // ========================================
+        // BULLET CLASS
+        // ========================================
+        class Bullet {
+            constructor(x, y, angle, weapon) {
+                this.x = x;
+                this.y = y;
+                this.vx = Math.cos(angle) * weapon.bulletSpeed;
+                this.vy = Math.sin(angle) * weapon.bulletSpeed;
+                this.radius = weapon.bulletSize;
+                this.damage = weapon.damage;
+                this.piercing = weapon.piercing;
+                this.distance = 0;
+                this.maxDistance = weapon.range;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.distance += Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                
+                // Check collision with zombies
+                for (let i = zombies.length - 1; i >= 0; i--) {
+                    const z = zombies[i];
+                    if (this.x - this.radius < z.x + z.width &&
+                        this.x + this.radius > z.x &&
+                        this.y - this.radius < z.y + z.height &&
+                        this.y + this.radius > z.y) {
+                        
+                        if (z.takeDamage(this.damage)) {
+                            zombies.splice(i, 1);
+                        }
+                        
+                        this.piercing--;
+                        if (this.piercing <= 0) return true;
+                    }
+                }
+                
+                // Check collision with obstacles
+                for (const obs of obstacles) {
+                    if (this.x - this.radius < obs.x + obs.width &&
+                        this.x + this.radius > obs.x &&
+                        this.y - this.radius < obs.y + obs.height &&
+                        this.y + this.radius > obs.y) {
+                        return true;
+                    }
+                }
+                
+                return this.distance > this.maxDistance;
+            }
+            
+            draw() {
+                const screenX = this.x - game.cameraX;
+                const screenY = this.y - game.cameraY;
+                
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(screenX - this.radius, screenY - this.radius, 
+                           this.radius * 2, this.radius * 2);
+                
+                // Glow
+                ctx.globalAlpha = 0.3;
+                ctx.fillRect(screenX - this.radius - 2, screenY - this.radius - 2,
+                           this.radius * 2 + 4, this.radius * 2 + 4);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // ========================================
+        // MAP GENERATION
+        // ========================================
+        function generateCity() {
+            obstacles = [];
+            roads = [];
+            
+            // Create roads
+            const roadWidth = 4 * TILE_SIZE;
+            
+            // Horizontal roads
+            for (let i = 1; i < 4; i++) {
+                roads.push({
+                    x: 0,
+                    y: i * MAP_HEIGHT * TILE_SIZE / 4 - roadWidth/2,
+                    width: MAP_WIDTH * TILE_SIZE,
+                    height: roadWidth,
+                    type: 'horizontal'
+                });
+            }
+            
+            // Vertical roads
+            for (let i = 1; i < 4; i++) {
+                roads.push({
+                    x: i * MAP_WIDTH * TILE_SIZE / 4 - roadWidth/2,
+                    y: 0,
+                    width: roadWidth,
+                    height: MAP_HEIGHT * TILE_SIZE,
+                    type: 'vertical'
+                });
+            }
+            
+            // Generate buildings
+            for (let i = 0; i < 30; i++) {
+                const building = {
+                    x: Math.random() * (MAP_WIDTH - 10) * TILE_SIZE,
+                    y: Math.random() * (MAP_HEIGHT - 10) * TILE_SIZE,
+                    width: (3 + Math.floor(Math.random() * 3)) * TILE_SIZE,
+                    height: (3 + Math.floor(Math.random() * 3)) * TILE_SIZE,
+                    color: `rgb(${40 + Math.random() * 40}, ${40 + Math.random() * 40}, ${40 + Math.random() * 40})`
+                };
+                
+                // Check if building overlaps roads or spawn
+                let valid = true;
+                
+                // Check road overlap
+                for (const road of roads) {
+                    if (building.x < road.x + road.width &&
+                        building.x + building.width > road.x &&
+                        building.y < road.y + road.height &&
+                        building.y + building.height > road.y) {
+                        valid = false;
+                        break;
+                    }
+                }
+                
+                // Check spawn area
+                const dx = Math.abs((building.x + building.width/2) - player.x);
+                const dy = Math.abs((building.y + building.height/2) - player.y);
+                if (dx < 150 && dy < 150) {
+                    valid = false;
+                }
+                
+                if (valid) {
+                    obstacles.push(building);
+                }
+            }
+        }
+
+        // ========================================
+        // GAME FUNCTIONS
+        // ========================================
+        function getCurrentWeapon() {
+            return WEAPONS[game.currentWeapon];
+        }
+
+        function shoot() {
+            const weapon = getCurrentWeapon();
+            if (weapon.type !== 'ranged') return;
+            
+            const now = Date.now();
+            if (now - player.lastShot < weapon.fireRate) return;
+            
+            // Find nearest zombie
+            let nearest = null;
+            let minDist = Infinity;
+            
+            for (const z of zombies) {
+                const dx = (z.x + z.width/2) - (player.x + player.width/2);
+                const dy = (z.y + z.height/2) - (player.y + player.height/2);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = z;
+                }
+            }
+            
+            if (nearest && minDist < weapon.range) {
+                const angle = Math.atan2(
+                    (nearest.y + nearest.height/2) - (player.y + player.height/2),
+                    (nearest.x + nearest.width/2) - (player.x + player.width/2)
+                );
+                
+                // Create bullets
+                for (let i = 0; i < weapon.multishot; i++) {
+                    const spread = weapon.spread || 0.15;
+                    const bulletAngle = angle + (i - (weapon.multishot - 1) / 2) * spread;
+                    bullets.push(new Bullet(
+                        player.x + player.width/2,
+                        player.y + player.height/2,
+                        bulletAngle,
+                        weapon
+                    ));
+                }
+                
+                player.lastShot = now;
+                playSound(300, 0.05);
+            }
+        }
+
+        function meleeAttack() {
+            const weapon = getCurrentWeapon();
+            if (weapon.type !== 'melee') return;
+            
+            const now = Date.now();
+            if (now - player.lastShot < weapon.fireRate) return;
+            
+            player.lastShot = now;
+            player.meleeActive = true;
+            playSound(150, 0.1);
+            
+            // Check hits
+            zombies.forEach(z => {
+                const dx = z.x + z.width/2 - (player.x + player.width/2);
+                const dy = z.y + z.height/2 - (player.y + player.height/2);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist <= weapon.range) {
+                    if (z.takeDamage(weapon.damage)) {
+                        zombies.splice(zombies.indexOf(z), 1);
+                    }
+                    
+                    // Knockback
+                    if (weapon.knockback) {
+                        const angle = Math.atan2(dy, dx);
+                        z.x += Math.cos(angle) * weapon.knockback;
+                        z.y += Math.sin(angle) * weapon.knockback;
+                    }
+                }
+            });
+            
+            setTimeout(() => {
+                player.meleeActive = false;
+            }, 200);
+        }
+
+        function spawnVendor() {
+            game.vendorActive = true;
+            game.vendorX = player.x + (Math.random() - 0.5) * 400;
+            game.vendorY = player.y + (Math.random() - 0.5) * 400;
+            
+            playSound(200, 0.3, 0.15);
+            
+            const notification = document.getElementById('vendorNotification');
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 5000);
+            
+            setTimeout(() => {
+                game.vendorActive = false;
+            }, VENDOR_DURATION);
+        }
+
+        function openVendor() {
+            const dx = Math.abs(player.x - game.vendorX);
+            const dy = Math.abs(player.y - game.vendorY);
+            
+            if (dx > 100 || dy > 100) return;
+            
+            game.paused = true;
+            document.getElementById('vendorMenu').style.display = 'block';
+            document.getElementById('vendorCoins').textContent = game.coins;
+            
+            const weaponList = document.getElementById('weaponList');
+            weaponList.innerHTML = '';
+            
+            for (const [key, weapon] of Object.entries(WEAPONS)) {
+                if (weapon.price === 0 || player.inventory.includes(key)) continue;
+                
+                const item = document.createElement('div');
+                item.className = 'weapon-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>${weapon.name}</strong>
+                        <div class="weapon-stats">DMG: ${weapon.damage} | Rate: ${weapon.fireRate}ms</div>
+                    </div>
+                    <button class="buy-button" ${game.coins < weapon.price ? 'disabled' : ''} 
+                            data-weapon="${key}">${weapon.price} 💰</button>
+                `;
+                weaponList.appendChild(item);
+            }
+            
+            // Add buy button listeners
+            weaponList.querySelectorAll('.buy-button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const weaponKey = e.target.dataset.weapon;
+                    buyWeapon(weaponKey);
+                });
+            });
+        }
+
+        function buyWeapon(weaponKey) {
+            const weapon = WEAPONS[weaponKey];
+            if (game.coins >= weapon.price) {
+                game.coins -= weapon.price;
+                player.inventory.push(weaponKey);
+                game.currentWeapon = weaponKey;
+                playSound(800, 0.2);
+                document.getElementById('coins').textContent = game.coins;
+                updateWeaponDisplay();
+                openVendor(); // Refresh
+            }
+        }
+
+        function closeVendor() {
+            document.getElementById('vendorMenu').style.display = 'none';
+            game.paused = false;
+        }
+
+        function updateWeaponDisplay() {
+            const weapon = getCurrentWeapon();
+            document.getElementById('weaponName').textContent = weapon.name;
+        }
+
+        function levelUp() {
+            game.paused = true;
+            playSound(400, 0.3, 0.1);
+            
+            const upgrades = [
+                { name: '❤️ +30 Health', fn: () => { player.maxHp += 30; player.hp += 30; } },
+                { name: '👟 +20% Speed', fn: () => player.speed *= 1.2 },
+                { name: '💚 Heal 50 HP', fn: () => player.hp = Math.min(player.maxHp, player.hp + 50) },
+                { name: '💰 +10 Coins', fn: () => { game.coins += 10; } }
+            ];
+            
+            const div = document.getElementById('levelUp');
+            const options = document.getElementById('upgradeOptions');
+            options.innerHTML = '';
+            
+            // Pick 3 random upgrades
+            const chosen = [];
+            for (let i = 0; i < 3; i++) {
+                let upgrade;
+                do {
+                    upgrade = upgrades[Math.floor(Math.random() * upgrades.length)];
+                } while (chosen.includes(upgrade));
+                chosen.push(upgrade);
+                
+                const btn = document.createElement('button');
+                btn.textContent = upgrade.name;
+                btn.addEventListener('click', () => {
+                    upgrade.fn();
+                    div.style.display = 'none';
+                    game.paused = false;
+                    document.getElementById('hp').textContent = Math.floor(player.hp);
+                    document.getElementById('maxHp').textContent = player.maxHp;
+                    document.getElementById('coins').textContent = game.coins;
+                });
+                
+                const optDiv = document.createElement('div');
+                optDiv.className = 'upgrade-option';
+                optDiv.appendChild(btn);
+                options.appendChild(optDiv);
+            }
+            
+            div.style.display = 'block';
+        }
+
+        // ========================================
+        // DRAWING FUNCTIONS
+        // ========================================
+        function drawCity() {
+            // Ground
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Roads
+            ctx.fillStyle = '#333';
+            roads.forEach(road => {
+                const screenX = road.x - game.cameraX;
+                const screenY = road.y - game.cameraY;
+                
+                if (screenX + road.width > 0 && screenX < canvas.width &&
+                    screenY + road.height > 0 && screenY < canvas.height) {
+                    ctx.fillRect(screenX, screenY, road.width, road.height);
+                    
+                    // Road lines
+                    ctx.strokeStyle = '#666';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([20, 10]);
+                    
+                    if (road.type === 'horizontal') {
+                        ctx.beginPath();
+                        ctx.moveTo(screenX, screenY + road.height/2);
+                        ctx.lineTo(screenX + road.width, screenY + road.height/2);
+                        ctx.stroke();
+                    } else {
+                        ctx.beginPath();
+                        ctx.moveTo(screenX + road.width/2, screenY);
+                        ctx.lineTo(screenX + road.width/2, screenY + road.height);
+                        ctx.stroke();
+                    }
+                    ctx.setLineDash([]);
+                }
+            });
+            
+            // Buildings
+            obstacles.forEach(obs => {
+                const screenX = obs.x - game.cameraX;
+                const screenY = obs.y - game.cameraY;
+                
+                if (screenX + obs.width > 0 && screenX < canvas.width &&
+                    screenY + obs.height > 0 && screenY < canvas.height) {
+                    
+                    // Shadow
+                    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+                    ctx.fillRect(screenX + 4, screenY + 4, obs.width, obs.height);
+                    
+                    // Building
+                    ctx.fillStyle = obs.color;
+                    ctx.fillRect(screenX, screenY, obs.width, obs.height);
+                    
+                    // Windows
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    for (let wx = screenX + 8; wx < screenX + obs.width - 8; wx += 16) {
+                        for (let wy = screenY + 8; wy < screenY + obs.height - 8; wy += 20) {
+                            ctx.fillRect(wx, wy, 8, 10);
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawVendor() {
+            if (!game.vendorActive) return;
+            
+            const screenX = game.vendorX - game.cameraX;
+            const screenY = game.vendorY - game.cameraY;
+            
+            // Truck body
+            ctx.fillStyle = '#4444aa';
+            ctx.fillRect(screenX, screenY, 60, 40);
+            
+            // Wheels
+            ctx.fillStyle = '#222';
+            ctx.fillRect(screenX + 5, screenY + 35, 10, 10);
+            ctx.fillRect(screenX + 45, screenY + 35, 10, 10);
+            
+            // Window
+            ctx.fillStyle = '#88aaff';
+            ctx.fillRect(screenX + 40, screenY + 5, 15, 10);
+            
+            // Text
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px monospace';
+            ctx.fillText('SHOP', screenX + 15, screenY + 25);
+            
+            // Pulse effect
+            const pulse = Math.sin(Date.now() * 0.005) * 0.5 + 0.5;
+            ctx.strokeStyle = `rgba(255, 215, 0, ${pulse})`;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(screenX - 5, screenY - 5, 70, 50);
+        }
+
+        function drawPlayer() {
+            if (!player.alive) return;
+            
+            const screenX = player.x - game.cameraX;
+            const screenY = player.y - game.cameraY;
+            
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(screenX + 2, screenY + player.height - 4, player.width - 4, 6);
+            
+            // Hit flash
+            if (player.hitFlash > 0) {
+                ctx.fillStyle = `rgba(255,255,255,${player.hitFlash})`;
+                ctx.fillRect(screenX - 2, screenY - 2, player.width + 4, player.height + 4);
+                player.hitFlash -= 0.05;
+            }
+            
+            // Body
+            ctx.fillStyle = '#4444ff';
+            ctx.fillRect(screenX + 4, screenY + 8, 16, 12);
+            
+            // Head
+            ctx.fillStyle = '#ffcc99';
+            ctx.fillRect(screenX + 8, screenY + 2, 8, 8);
+            
+            // Eyes
+            ctx.fillStyle = '#000';
+            ctx.fillRect(screenX + 10, screenY + 4, 2, 2);
+            ctx.fillRect(screenX + 14, screenY + 4, 2, 2);
+            
+            // Melee swing visual
+            if (player.meleeActive) {
+                const weapon = getCurrentWeapon();
+                ctx.save();
+                ctx.translate(screenX + player.width/2, screenY + player.height/2);
+                
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.beginPath();
+                ctx.arc(0, 0, weapon.range, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        // ========================================
+        // MAIN GAME LOOP
+        // ========================================
+        function gameLoop() {
+            if (!game.started) return;
+            
+            if (!game.paused) {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Update camera
+                game.cameraX = player.x + player.width/2 - canvas.width/2;
+                game.cameraY = player.y + player.height/2 - canvas.height/2;
+                
+                // Add shake
+                if (game.shake > 0) {
+                    game.cameraX += (Math.random() - 0.5) * game.shake;
+                    game.cameraY += (Math.random() - 0.5) * game.shake;
+                    game.shake *= 0.9;
+                }
+                
+                // Draw city
+                drawCity();
+                
+                // Player movement
+                if (player.alive) {
+                    let dx = 0, dy = 0;
+                    if (keys['a'] || keys['arrowleft']) dx -= player.speed;
+                    if (keys['d'] || keys['arrowright']) dx += player.speed;
+                    if (keys['w'] || keys['arrowup']) dy -= player.speed;
+                    if (keys['s'] || keys['arrowdown']) dy += player.speed;
+                    
+                    if (dx || dy) {
+                        const nextX = player.x + dx;
+                        const nextY = player.y + dy;
+                        let canMove = true;
+                        
+                        // Check building collision
+                        for (const obs of obstacles) {
+                            if (nextX < obs.x + obs.width &&
+                                nextX + player.width > obs.x &&
+                                nextY < obs.y + obs.height &&
+                                nextY + player.height > obs.y) {
+                                canMove = false;
+                                break;
+                            }
+                        }
+                        
+                        if (canMove) {
+                            player.x = nextX;
+                            player.y = nextY;
+                        }
+                    }
+                    
+                    // Keep in bounds
+                    player.x = Math.max(0, Math.min(MAP_WIDTH * TILE_SIZE - player.width, player.x));
+                    player.y = Math.max(0, Math.min(MAP_HEIGHT * TILE_SIZE - player.height, player.y));
+                }
+                
+                // Auto attack
+                const weapon = getCurrentWeapon();
+                if (zombies.length > 0) {
+                    if (weapon.type === 'ranged') {
+                        shoot();
+                    } else {
+                        // Check if zombie in melee range
+                        for (const z of zombies) {
+                            const dx = (z.x + z.width/2) - (player.x + player.width/2);
+                            const dy = (z.y + z.height/2) - (player.y + player.height/2);
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < weapon.range) {
+                                meleeAttack();
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Spawn zombies
+                if (zombies.length < MAX_ZOMBIES && Math.random() < 0.02) {
+                    const elite = Math.random() < 0.1;
+                    zombies.push(new Zombie(elite));
+                }
+                
+                // Vendor spawn
+                const now = Date.now();
+                if (!game.vendorActive && now - game.lastVendorSpawn > VENDOR_INTERVAL) {
+                    spawnVendor();
+                    game.lastVendorSpawn = now;
+                }
+                
+                // Update zombies
+                for (let i = zombies.length - 1; i >= 0; i--) {
+                    if (zombies[i].update()) {
+                        zombies.splice(i, 1);
+                    }
+                }
+                
+                // Update bullets
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    if (bullets[i].update()) {
+                        bullets.splice(i, 1);
+                    }
+                }
+                
+                // Update particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx || 0;
+                    p.y += p.vy || 0;
+                    if (p.vx) p.vx *= 0.95;
+                    if (p.vy) p.vy *= 0.95;
+                    p.life--;
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+                
+                // Update items
+                for (let i = items.length - 1; i >= 0; i--) {
+                    const item = items[i];
+                    const dx = (player.x + player.width/2) - item.x;
+                    const dy = (player.y + player.height/2) - item.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Magnet effect
+                    if (dist < 80 && dist > 0) {
+                        item.x += (dx / dist) * 5;
+                        item.y += (dy / dist) * 5;
+                    }
+                    
+                    // Collect
+                    if (dist < 20) {
+                        if (item.type === 'coin') {
+                            game.coins++;
+                            playSound(800, 0.1);
+                            document.getElementById('coins').textContent = game.coins;
+                        } else if (item.type === 'xp') {
+                            game.xp += item.value;
+                            if (game.xp >= game.xpNeeded) {
+                                game.level++;
+                                game.xp = 0;
+                                game.xpNeeded = Math.floor(game.xpNeeded * 1.5);
+                                levelUp();
+                            }
+                            document.getElementById('xp').textContent = game.xp;
+                            document.getElementById('xpNeeded').textContent = game.xpNeeded;
+                            document.getElementById('level').textContent = game.level;
+                        }
+                        items.splice(i, 1);
+                    }
+                }
+                
+                // Draw everything
+                particles.forEach(p => {
+                    const screenX = p.x - game.cameraX;
+                    const screenY = p.y - game.cameraY;
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life / 30;
+                    ctx.fillRect(screenX - 2, screenY - 2, 4, 4);
+                    ctx.globalAlpha = 1;
+                });
+                
+                items.forEach(item => {
+                    const screenX = item.x - game.cameraX;
+                    const screenY = item.y - game.cameraY;
+                    
+                    if (item.type === 'coin') {
+                        const bob = Math.sin(Date.now() * 0.01) * 2;
+                        ctx.fillStyle = '#ffd700';
+                        ctx.beginPath();
+                        ctx.arc(screenX, screenY + bob, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (item.type === 'xp') {
+                        ctx.fillStyle = '#00ff00';
+                        const size = 5 + Math.sin(Date.now() * 0.01) * 2;
+                        ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
+                    }
+                });
+                
+                zombies.forEach(z => z.draw());
+                bullets.forEach(b => b.draw());
+                drawVendor();
+                drawPlayer();
+                
+                // Update timer
+                const elapsed = Date.now() - game.startTime;
+                const remaining = Math.max(0, GAME_TIME - elapsed);
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                document.getElementById('timer').textContent = 
+                    `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Check win/lose
+                if (remaining === 0 && player.alive) {
+                    gameWon();
+                } else if (player.hp <= 0 && player.alive) {
+                    gameOver();
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ========================================
+        // GAME CONTROL
+        // ========================================
+        function startGame() {
+            initAudio();
+            
+            document.getElementById('startMenu').style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            document.getElementById('currentWeapon').style.display = 'block';
+            
+            game.started = true;
+            game.startTime = Date.now();
+            game.lastVendorSpawn = Date.now() - 30000; // Vendor spawns sooner
+            
+            generateCity();
+            updateWeaponDisplay();
+            gameLoop();
+        }
+
+        function gameOver() {
+            player.alive = false;
+            
+            const elapsed = Date.now() - game.startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            
+            document.getElementById('finalTime').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('finalKills').textContent = game.kills;
+            document.getElementById('finalCoins').textContent = game.coins;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        function gameWon() {
+            player.alive = false;
+            document.getElementById('gameOverTitle').textContent = '🎉 VICTORY! 🎉';
+            document.getElementById('finalTime').textContent = '15:00';
+            document.getElementById('finalKills').textContent = game.kills;
+            document.getElementById('finalCoins').textContent = game.coins;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        function resetGame() {
+            location.reload();
+        }
+
+        // ========================================
+        // EVENT LISTENERS
+        // ========================================
+        document.getElementById('startButton').addEventListener('click', startGame);
+        document.getElementById('resetButton').addEventListener('click', resetGame);
+        document.getElementById('closeVendorBtn').addEventListener('click', closeVendor);
+
+        console.log('Zombie City Survivor - Ready to play!');
+    </script>
+</body>
+</html>
